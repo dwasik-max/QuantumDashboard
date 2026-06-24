@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Tech Investment Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefec;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9b9b96;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #262624;
+      --bg3: #303030;
+      --text: #f0efe8;
+      --text2: #9b9b96;
+      --text3: #6b6b67;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .page { max-width: 900px; margin: 0 auto; }
+  .hdr { margin-bottom: 20px; }
+  .hdr h1 { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .hdr p { font-size: 13px; color: var(--text2); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tb {
+    font-size: 13px; padding: 7px 16px;
+    border-radius: var(--radius); border: 1px solid var(--border2);
+    background: transparent; color: var(--text2); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tb:hover { background: var(--bg2); color: var(--text); }
+  .tb.on { background: #185FA5; color: #fff; border-color: #185FA5; font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.on { display: block; }
+  .mg { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .mc { background: var(--bg2); border-radius: var(--radius); padding: 14px; }
+  .ml { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .mv { font-size: 20px; font-weight: 600; color: var(--text); }
+  .ms { font-size: 11px; margin-top: 3px; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; }
+  .ct { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+  .cr { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .cr { grid-template-columns: 1fr; } }
+  .lg { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .ld { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { color: var(--text2); text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  td { padding: 9px 8px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .bx { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+  .g { background: #EAF3DE; color: #3B6D11; }
+  .r { background: #FCEBEB; color: #A32D2D; }
+  .b { background: #E6F1FB; color: #185FA5; }
+  .a { background: #FAEEDA; color: #854F0B; }
+  .gr { background: #F1EFE8; color: #5F5E5A; }
+  @media (prefers-color-scheme: dark) {
+    .g { background: #1a3a10; color: #9FE1CB; }
+    .r { background: #3a1010; color: #F09595; }
+    .b { background: #0a2a4a; color: #85B7EB; }
+    .a { background: #3a2a00; color: #FAC775; }
+    .gr { background: #2a2a28; color: #B4B2A9; }
+  }
+  .tk { font-weight: 600; font-size: 13px; }
+  .bw { display: flex; align-items: center; gap: 6px; }
+  .bb { flex: 1; background: var(--bg2); border-radius: 3px; height: 6px; overflow: hidden; }
+  .bf { height: 100%; border-radius: 3px; }
+  .nt { font-size: 11px; color: var(--text3); margin-bottom: 10px; font-style: italic; }
+  .hb { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .hl { width: 50px; font-size: 12px; color: var(--text2); text-align: right; font-weight: 500; }
+  .hbb { flex: 1; background: var(--bg2); border-radius: 4px; height: 14px; overflow: hidden; }
+  .hbf { height: 100%; border-radius: 4px; }
+  .hc { width: 55px; font-size: 12px; font-weight: 600; color: var(--text); }
+  .tip { background: var(--bg2); border-left: 3px solid #185FA5; border-radius: 0 6px 6px 0; padding: 8px 12px; font-size: 12px; color: var(--text2); margin-top: 10px; }
+  .row { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 120px; background: var(--bg2); border-radius: 8px; padding: 10px; }
+  .col-label { font-size: 10px; font-weight: 600; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .col-val { font-size: 12px; color: var(--text); line-height: 1.5; }
+  footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 24px; padding-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <h1>Quantum Tech Investment Dashboard</h1>
+    <p>IBM &nbsp;·&nbsp; QNT &nbsp;·&nbsp; IONQ &nbsp;·&nbsp; INFQ &nbsp;·&nbsp; QBTS &nbsp;·&nbsp; QUBT &nbsp;&nbsp;|&nbsp;&nbsp; Revenue FY 2025 &nbsp;·&nbsp; Hedge fund data from latest 13F filings &nbsp;·&nbsp; As of Jun 24, 2026</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tb on" onclick="show('ov',this)">Overview</button>
+    <button class="tb" onclick="show('hf',this)">Hedge funds</button>
+    <button class="tb" onclick="show('rv',this)">Revenue</button>
+    <button class="tb" onclick="show('gr',this)">Revenue growth</button>
+    <button class="tb" onclick="show('cm',this)">Comparison</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="ov" class="tab-panel on">
+    <div class="mg">
+      <div class="mc"><div class="ml">IBM market cap</div><div class="mv">$245.9B</div><div class="ms" style="color:#D85A30">-1.20% today</div></div>
+      <div class="mc"><div class="ml">IONQ market cap</div><div class="mv">$19.7B</div><div class="ms" style="color:#D85A30">-8.45% today</div></div>
+      <div class="mc"><div class="ml">QNT market cap</div><div class="mv">$2.17B</div><div class="ms" style="color:#D85A30">-10.01% today</div></div>
+      <div class="mc"><div class="ml">INFQ market cap</div><div class="mv">$3.0B</div><div class="ms" style="color:#D85A30">-13.68% today</div></div>
+      <div class="mc"><div class="ml">QBTS market cap</div><div class="mv">~$2.5B</div><div class="ms" style="color:var(--text3)">est.</div></div>
+      <div class="mc"><div class="ml">QUBT market cap</div><div class="mv">~$1.2B</div><div class="ms" style="color:var(--text3)">est.</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">Company snapshot</div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Ticker</th><th>Company</th><th>Price</th><th>Day %</th><th>FY2025 Revenue</th><th>Hedge funds</th><th>Tech type</th></tr></thead>
+        <tbody>
+          <tr><td class="tk" style="color:#185FA5">IBM</td><td>Intl. Business Machines</td><td>261.76</td><td><span class="bx r">-1.20%</span></td><td>$67.5B</td><td><strong>3,466</strong></td><td>Diversified IT</td></tr>
+          <tr><td class="tk" style="color:#D85A30">IONQ</td><td>IonQ Inc.</td><td>52.96</td><td><span class="bx r">-8.45%</span></td><td>$130M</td><td><strong>543</strong></td><td>Trapped-ion</td></tr>
+          <tr><td class="tk" style="color:#1D9E75">QNT</td><td>Quantinuum Inc.</td><td>69.71</td><td><span class="bx r">-10.01%</span></td><td>$31M</td><td><span class="bx gr">IPO Jun 2026</span></td><td>Trapped-ion</td></tr>
+          <tr><td class="tk" style="color:#534AB7">INFQ</td><td>Infleqtion Inc.</td><td>13.78</td><td><span class="bx r">-13.68%</span></td><td>$32.5M</td><td><strong>~5</strong></td><td>Neutral-atom</td></tr>
+          <tr><td class="tk" style="color:#0F6E56">QBTS</td><td>D-Wave Quantum</td><td>~25.70</td><td>—</td><td>$24.6M</td><td><strong>~100</strong></td><td>Annealing</td></tr>
+          <tr><td class="tk" style="color:#993C1D">QUBT</td><td>Quantum Computing Inc.</td><td>—</td><td>—</td><td>$682K</td><td><strong>~239</strong></td><td>Photonics</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEDGE FUNDS -->
+  <div id="hf" class="tab-panel">
+    <div class="cr">
+      <div class="card" style="margin-bottom:0">
+        <div class="ct">Hedge funds holding (13F filings)</div>
+        <p class="nt">QNT IPO'd Jun 3 2026 — no 13F cycle yet. INFQ recently listed with ~5 early filers.</p>
+        <div style="margin-top:12px">
+          <div class="hb"><span class="hl" style="color:#185FA5">IBM</span><div class="hbb"><div class="hbf" style="width:100%;background:#185FA5"></div></div><span class="hc">3,466</span></div>
+          <div class="hb"><span class="hl" style="color:#D85A30">IONQ</span><div class="hbb"><div class="hbf" style="width:15.7%;background:#D85A30"></div></div><span class="hc">543</span></div>
+          <div class="hb"><span class="hl" style="color:#993C1D">QUBT</span><div class="hbb"><div class="hbf" style="width:6.9%;background:#993C1D"></div></div><span class="hc">~239</span></div>
+          <div class="hb"><span class="hl" style="color:#0F6E56">QBTS</span><div class="hbb"><div class="hbf" style="width:2.9%;background:#0F6E56"></div></div><span class="hc">~100</span></div>
+          <div class="hb"><span class="hl" style="color:#534AB7">INFQ</span><div class="hbb"><div class="hbf" style="width:0.3%;background:#534AB7"></div></div><span class="hc">~5</span></div>
+          <div class="hb"><span class="hl" style="color:#1D9E75">QNT</span><div class="hbb"><div class="hbf" style="width:0%;background:#1D9E75"></div></div><span class="hc">0*</span></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="ct">Hedge fund count vs revenue ($M)</div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="hfSc" role="img" aria-label="Bubble chart: IBM has most hedge funds and highest revenue; pure-plays clustered at lower values">IBM 3466 funds $67.5B; IONQ 543 $130M; QUBT 239 tiny rev; QBTS 100 $24.6M</canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Hedge fund ownership detail</div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Ticker</th><th>Hedge funds</th><th>Period</th><th>Trend</th><th>Context</th></tr></thead>
+        <tbody>
+          <tr><td class="tk" style="color:#185FA5">IBM</td><td><strong>3,466</strong></td><td>Q3 2025</td><td><span class="bx gr">Flat</span></td><td>Mixed Q1 2026 — 10 added, 13 cut; net positive share count</td></tr>
+          <tr><td class="tk" style="color:#D85A30">IONQ</td><td><strong>543</strong></td><td>Q2 2025</td><td><span class="bx r">% declining</span></td><td>Share count rose but institutional % of float fell; Q1 2026 rev +755% YoY</td></tr>
+          <tr><td class="tk" style="color:#993C1D">QUBT</td><td><strong>~239</strong></td><td>Latest 2 periods</td><td><span class="bx a">Building</span></td><td>308 total institutional owners; Vanguard is largest holder</td></tr>
+          <tr><td class="tk" style="color:#0F6E56">QBTS</td><td><strong>~100</strong></td><td>Q3 2024</td><td><span class="bx a">Growing</span></td><td>371 total 13F filers incl. mutual funds; $100M govt funding expected</td></tr>
+          <tr><td class="tk" style="color:#534AB7">INFQ</td><td><strong>~5</strong></td><td>Early 2026</td><td><span class="bx gr">New listing</span></td><td>Maverick Capital was major holder — recently sold large position</td></tr>
+          <tr><td class="tk" style="color:#1D9E75">QNT</td><td><strong>0</strong></td><td>—</td><td><span class="bx gr">Pre-13F</span></td><td>IPO June 3, 2026; ~71.5% held by Honeywell parent Cambridge Quantum Holdings</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVENUE -->
+  <div id="rv" class="tab-panel">
+    <p class="nt">IBM's $67.5B dwarfs all pure-plays combined by 500×. Pure-play chart uses its own scale.</p>
+    <div class="cr">
+      <div class="card" style="margin-bottom:0">
+        <div class="ct">Revenue share — all 6 companies (FY 2025)</div>
+        <div class="lg" id="pleg"></div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="pie" role="img" aria-label="Doughnut chart: IBM holds 99.7% of total combined revenue">IBM dominates; quantum pure-plays are tiny slivers</canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="ct">Pure-play quantum revenue (FY 2025, $M)</div>
+        <div class="lg" id="bleg"></div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="bar" role="img" aria-label="Bar chart: IONQ $130M leads pure-plays; INFQ $32.5M; QNT $31M; QBTS $24.6M; QUBT under $1M">IONQ leads quantum pure-plays</canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Revenue vs 2026 guidance</div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Ticker</th><th>FY2025 Revenue</th><th>YoY Growth</th><th>Bar</th><th>2026 Guidance</th></tr></thead>
+        <tbody>
+          <tr><td class="tk">IBM</td><td>$67.5B</td><td><span class="bx g">+7.6%</span></td><td><div class="bw"><div class="bb"><div class="bf" style="width:100%;background:#185FA5"></div></div></td><td>+5%+ CC</td></tr>
+          <tr><td class="tk">IONQ</td><td>$130M</td><td><span class="bx g">+202%</span></td><td><div class="bw"><div class="bb"><div class="bf" style="width:100%;background:#D85A30"></div></div></td><td>$260–270M</td></tr>
+          <tr><td class="tk">INFQ</td><td>$32.5M</td><td><span class="bx b">new public</span></td><td><div class="bw"><div class="bb"><div class="bf" style="width:25%;background:#534AB7"></div></div></td><td>$40M+</td></tr>
+          <tr><td class="tk">QNT</td><td>$31M</td><td><span class="bx b">IPO 2026</span></td><td><div class="bw"><div class="bb"><div class="bf" style="width:24%;background:#1D9E75"></div></div></td><td>—</td></tr>
+          <tr><td class="tk">QBTS</td><td>$24.6M</td><td><span class="bx g">+179%</span></td><td><div class="bw"><div class="bb"><div class="bf" style="width:19%;background:#0F6E56"></div></div></td><td>~$100M (govt)</td></tr>
+          <tr><td class="tk">QUBT</td><td>$682K</td><td><span class="bx g">+83%</span></td><td><div class="bw"><div class="bb"><div class="bf" style="width:1%;background:#993C1D"></div></div></td><td>—</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVENUE GROWTH -->
+  <div id="gr" class="tab-panel">
+    <p class="nt">IBM shown on its own chart ($B). Pure-plays on second chart ($M). QNT & INFQ recently listed — limited history.</p>
+    <div class="card">
+      <div class="ct">IBM annual revenue 2022–2025 ($B)</div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="ibmLine" role="img" aria-label="Line chart: IBM revenue 2022-2025 showing steady growth from $60.5B to $67.5B">IBM 2022 $60.5B, 2023 $61.9B, 2024 $62.8B, 2025 $67.5B</canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">Quantum pure-play revenue 2022–2025 ($M)</div>
+      <div class="lg" id="gleg"></div>
+      <div style="position:relative;width:100%;height:280px"><canvas id="growLine" role="img" aria-label="Multi-line chart: IONQ grew from $11.1M in 2022 to $130M in 2025; QBTS and QUBT grew slowly then accelerated">IONQ: 11.1, 22, 43.1, 130. QBTS: 6, 8.75, 8.83, 24.6. QUBT near zero throughout.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">Year-over-year revenue growth rates (%)</div>
+      <div style="position:relative;width:100%;height:240px"><canvas id="growBar" role="img" aria-label="Grouped bar chart: YoY growth rates 2023-2025. IONQ grew 98%, 96%, 202%. QBTS mostly flat then 179%. IBM steady 2-7%.">IONQ and QBTS showing dramatic acceleration in 2025</canvas></div>
+    </div>
+  </div>
+
+  <!-- COMPARISON -->
+  <div id="cm" class="tab-panel">
+    <div class="card">
+      <div class="ct">Full investment matrix</div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Ticker</th><th>P/E</th><th>EPS (dil.)</th><th>Market cap</th><th>Dividend</th><th>Hedge funds</th><th>Profitability</th><th>Stage</th></tr></thead>
+        <tbody>
+          <tr><td class="tk" style="color:#185FA5">IBM</td><td>23.45</td><td>$11.33</td><td>$245.9B</td><td>$6.76 (2.55%)</td><td><strong>3,466</strong></td><td><span class="bx g">Profitable</span></td><td><span class="bx b">Mature</span></td></tr>
+          <tr><td class="tk" style="color:#D85A30">IONQ</td><td>148.33</td><td>$0.39</td><td>$19.7B</td><td>None</td><td><strong>543</strong></td><td><span class="bx a">Mixed</span></td><td><span class="bx a">Growth</span></td></tr>
+          <tr><td class="tk" style="color:#1D9E75">QNT</td><td>—</td><td>-$1.76</td><td>$2.17B</td><td>None</td><td><span class="bx gr">0 (new IPO)</span></td><td><span class="bx r">Loss</span></td><td><span class="bx a">Growth</span></td></tr>
+          <tr><td class="tk" style="color:#534AB7">INFQ</td><td>—</td><td>-$0.14</td><td>$3.0B</td><td>None</td><td><strong>~5</strong></td><td><span class="bx r">Loss</span></td><td><span class="bx a">Growth</span></td></tr>
+          <tr><td class="tk" style="color:#0F6E56">QBTS</td><td>—</td><td>negative</td><td>~$2.5B</td><td>None</td><td><strong>~100</strong></td><td><span class="bx r">Loss</span></td><td><span class="bx a">Early</span></td></tr>
+          <tr><td class="tk" style="color:#993C1D">QUBT</td><td>—</td><td>-$0.11</td><td>~$1.2B</td><td>None</td><td><strong>~239</strong></td><td><span class="bx r">Pre-revenue</span></td><td><span class="bx r">Seed</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Revenue maturity — quantum pure-plays (IBM excluded, 520× larger)</div>
+      <div style="padding-top:6px">
+        <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">IONQ</span><span style="font-weight:600">$130M</span></div><div style="background:var(--bg2);border-radius:4px;height:10px;overflow:hidden"><div style="width:100%;height:100%;background:#D85A30;border-radius:4px"></div></div></div>
+        <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">INFQ</span><span style="font-weight:600">$32.5M</span></div><div style="background:var(--bg2);border-radius:4px;height:10px;overflow:hidden"><div style="width:25%;height:100%;background:#534AB7;border-radius:4px"></div></div></div>
+        <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">QNT</span><span style="font-weight:600">$31M</span></div><div style="background:var(--bg2);border-radius:4px;height:10px;overflow:hidden"><div style="width:24%;height:100%;background:#1D9E75;border-radius:4px"></div></div></div>
+        <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">QBTS</span><span style="font-weight:600">$24.6M</span></div><div style="background:var(--bg2);border-radius:4px;height:10px;overflow:hidden"><div style="width:19%;height:100%;background:#0F6E56;border-radius:4px"></div></div></div>
+        <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">QUBT</span><span style="font-weight:600">$682K</span></div><div style="background:var(--bg2);border-radius:4px;height:10px;overflow:hidden"><div style="width:1%;height:100%;background:#993C1D;border-radius:4px"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Data sourced from SEC filings, 13F disclosures, and company earnings releases &nbsp;·&nbsp; Prices as of Jun 24, 2026 &nbsp;·&nbsp; Not investment advice</footer>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+  if (!chartsBuilt[id]) { buildCharts(id); chartsBuilt[id] = true; }
+}
+
+const chartsBuilt = { ov: false, hf: false, rv: false, gr: false, cm: false };
+
+const C6 = ['#185FA5','#D85A30','#1D9E75','#534AB7','#0F6E56','#993C1D'];
+const TK6 = ['IBM','IONQ','QNT','INFQ','QBTS','QUBT'];
+const REV6 = [67500, 130, 31, 32.5, 24.6, 0.682];
+
+function buildCharts(id) {
+  if (id === 'rv') buildRevCharts();
+  if (id === 'hf') buildHFChart();
+  if (id === 'gr') buildGrowthCharts();
+}
+
+function buildRevCharts() {
+  const tot = REV6.reduce((a,b)=>a+b,0);
+  const pleg = document.getElementById('pleg');
+  TK6.forEach((t,i) => {
+    const pct = (REV6[i]/tot*100).toFixed(i===0?1:2);
+    pleg.innerHTML += `<span class="li"><span class="ld" style="background:${C6[i]}"></span>${t} ${pct}%</span>`;
+  });
+  new Chart(document.getElementById('pie'), {
+    type: 'doughnut',
+    data: { labels: TK6, datasets: [{ data: REV6, backgroundColor: C6, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>{ const v=c.parsed; return v>=1000?` $${(v/1000).toFixed(1)}B`:` $${v}M`; }}} } }
+  });
+
+  const qT=['IONQ','INFQ','QNT','QBTS','QUBT'], qR=[130,32.5,31,24.6,0.682], qC=['#D85A30','#534AB7','#1D9E75','#0F6E56','#993C1D'];
+  const bleg = document.getElementById('bleg');
+  qT.forEach((t,i) => bleg.innerHTML += `<span class="li"><span class="ld" style="background:${qC[i]}"></span>${t}</span>`);
+  new Chart(document.getElementById('bar'), {
+    type: 'bar',
+    data: { labels: qT, datasets: [{ data: qR, backgroundColor: qC, borderRadius: 4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{callback:v=>'$'+v+'M',font:{size:11}},grid:{color:'rgba(128,128,128,0.1)'}}, x:{ticks:{font:{size:11}},grid:{display:false}} } }
+  });
+}
+
+function buildHFChart() {
+  new Chart(document.getElementById('hfSc'), {
+    type: 'bubble',
+    data: { datasets: [
+      {label:'IBM',  data:[{x:67500,y:3466,r:20}], backgroundColor:'#185FA5bb', borderColor:'#185FA5'},
+      {label:'IONQ', data:[{x:130,  y:543, r:9}],  backgroundColor:'#D85A30bb', borderColor:'#D85A30'},
+      {label:'QUBT', data:[{x:0.682,y:239, r:6}],  backgroundColor:'#993C1Dbb', borderColor:'#993C1D'},
+      {label:'QBTS', data:[{x:24.6, y:100, r:5}],  backgroundColor:'#0F6E56bb', borderColor:'#0F6E56'},
+      {label:'INFQ', data:[{x:32.5, y:5,   r:4}],  backgroundColor:'#534AB7bb', borderColor:'#534AB7'},
+      {label:'QNT',  data:[{x:31,   y:1,   r:4}],  backgroundColor:'#1D9E75bb', borderColor:'#1D9E75'},
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.dataset.label}: $${c.parsed.x}M rev, ${c.parsed.y} HFs`}} },
+      scales:{
+        x:{title:{display:true,text:'Revenue ($M)',font:{size:10}}, ticks:{font:{size:10},callback:v=>v>=1000?'$'+(v/1000).toFixed(0)+'B':'$'+v+'M'}, grid:{color:'rgba(128,128,128,0.1)'}, min:-2000, max:72000},
+        y:{title:{display:true,text:'# Hedge funds',font:{size:10}}, ticks:{font:{size:10}}, grid:{color:'rgba(128,128,128,0.1)'}, min:-50, max:3800}
+      }
+    }
+  });
+}
+
+function buildGrowthCharts() {
+  new Chart(document.getElementById('ibmLine'), {
+    type: 'line',
+    data: { labels:['2022','2023','2024','2025'], datasets:[{ label:'IBM ($B)', data:[60.5,61.9,62.8,67.5], borderColor:'#185FA5', backgroundColor:'#185FA520', fill:true, tension:0.3, pointRadius:5, pointBackgroundColor:'#185FA5' }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{callback:v=>'$'+v+'B',font:{size:11}},min:58,grid:{color:'rgba(128,128,128,0.1)'}}, x:{ticks:{font:{size:11}},grid:{display:false}} } }
+  });
+
+  const gDS = [
+    {label:'IONQ', data:[11.1,22,43.1,130],      borderColor:'#D85A30', fill:false, tension:0.3, pointRadius:4, borderWidth:2},
+    {label:'QBTS', data:[6,8.75,8.83,24.6],       borderColor:'#0F6E56', fill:false, tension:0.3, pointRadius:4, borderDash:[4,3], borderWidth:2},
+    {label:'QUBT', data:[0.18,0.26,0.37,0.68],    borderColor:'#993C1D', fill:false, tension:0.3, pointRadius:4, borderDash:[2,4], borderWidth:2},
+    {label:'INFQ', data:[null,null,null,32.5],     borderColor:'#534AB7', fill:false, tension:0.3, pointRadius:6, pointStyle:'rectRot', borderWidth:2},
+    {label:'QNT',  data:[null,null,null,31],       borderColor:'#1D9E75', fill:false, tension:0.3, pointRadius:6, pointStyle:'triangle', borderWidth:2},
+  ];
+  const gleg = document.getElementById('gleg');
+  gDS.forEach(d => gleg.innerHTML += `<span class="li"><span class="ld" style="background:${d.borderColor}"></span>${d.label}</span>`);
+  new Chart(document.getElementById('growLine'), {
+    type:'line',
+    data:{ labels:['2022','2023','2024','2025'], datasets:gDS },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?`${c.dataset.label}: $${c.parsed.y}M`:''}}}, scales:{ y:{ticks:{callback:v=>'$'+v+'M',font:{size:11}},grid:{color:'rgba(128,128,128,0.1)'},min:0}, x:{ticks:{font:{size:11}},grid:{display:false}} } }
+  });
+
+  new Chart(document.getElementById('growBar'), {
+    type:'bar',
+    data:{ labels:['2023 YoY','2024 YoY','2025 YoY'], datasets:[
+      {label:'IBM',  data:[2.2,1.4,7.6],  backgroundColor:'#185FA5', borderRadius:3},
+      {label:'IONQ', data:[98,96,202],     backgroundColor:'#D85A30', borderRadius:3},
+      {label:'QBTS', data:[46,1,179],      backgroundColor:'#0F6E56', borderRadius:3},
+      {label:'QUBT', data:[44,42,83],      backgroundColor:'#993C1D', borderRadius:3},
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{font:{size:11},boxWidth:10,padding:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: +${c.parsed.y}%`}}}, scales:{ x:{ticks:{font:{size:11}},grid:{display:false}}, y:{ticks:{callback:v=>'+'+v+'%',font:{size:11}},grid:{color:'rgba(128,128,128,0.1)'}} } }
+  });
+}
+
+buildRevCharts();
+chartsBuilt['rv'] = true;
+</script>
+</body>
+</html>
